@@ -23,7 +23,7 @@ namespace Hello_World
 
   public abstract class Book : NamedObject
   {
-    protected Book(string name) : base(name)
+    public Book(string name) : base(name)
     {
     }
 
