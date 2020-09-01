@@ -11,5 +11,6 @@ namespace Hello_World
     public double Average;
     public double High;
     public double Low;
+    public char Letter;
   }
 }
