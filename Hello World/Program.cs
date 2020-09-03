@@ -9,21 +9,19 @@ namespace GradeBook
   {
     static void Main(string[] args)
     {
-      var book = new InMemoryBook("New Book");
+      IBook book = new DiskBook("New Book");      
       book.GradeAdded += OnGradeAdded;
       EnterGrades(book);
-
+      
       var stats = book.GetStatistics();
       Console.WriteLine($"The lowest grade is{stats.Low}");
       Console.WriteLine($"The highest grade is{stats.High}");
       Console.WriteLine($"The average grade is{stats.Average}");
       Console.WriteLine($"The average grade is{stats.Letter}");
       Console.ReadLine();
-
-
     }
 
-    private static void EnterGrades(Book book)
+    private static void EnterGrades(IBook book)
     {
       
       while (true)

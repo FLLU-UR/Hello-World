@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Hello_World
 {
@@ -20,14 +22,70 @@ namespace Hello_World
       set;
     }
   }
+  
+  public interface IBook
+  {
+    void AddGrade(double grade);
+    Statistics GetStatistics();
+    string Name { get; }
+    event GradeAddedDelegate GradeAdded;
+  }
 
-  public abstract class Book : NamedObject
+  public abstract class Book : NamedObject, IBook
   {
     public Book(string name) : base(name)
     {
     }
 
+    public abstract event GradeAddedDelegate GradeAdded;
     public abstract void AddGrade(double grade);
+    public abstract Statistics GetStatistics();
+  }
+
+  public class DiskBook : Book
+  {
+    public DiskBook(string name) : base(name)
+    {
+      Name = name;
+      ClearBook();
+    }
+    public void ClearBook()
+    {
+      File.Delete(@"C:\Users\Sonix\source\repos\Hello World\" + Name + ".txt");
+    }
+    public override void AddGrade(double grade)
+    {
+      if (grade <= 100 && grade >= 0)
+      {
+        using (var writer = File.AppendText(@"C:\Users\Sonix\source\repos\Hello World\" + Name + ".txt"))
+        {
+          writer.WriteLine(grade);
+          if (GradeAdded != null)
+          {
+            GradeAdded(this, new EventArgs());
+          }
+        }
+      }
+      else
+      {
+        throw new ArgumentException($"Invalid {nameof(grade)}");
+      }          
+    }
+
+    public override Statistics GetStatistics()
+    {
+      if (File.Exists(@"C:\Users\Sonix\source\repos\Hello World\" + Name + ".txt"))
+      {
+        var readString = File.ReadLines(@"C:\Users\Sonix\source\repos\Hello World\" + Name + ".txt");
+        grades = readString.Select(x => double.Parse(x)).ToList();
+      }    
+      var result = new Statistics(grades);
+      result.ComputeStatistics();
+      return result;
+    }
+
+    private List<double> grades;
+    public override event GradeAddedDelegate GradeAdded;
   }
 
   public class InMemoryBook : Book
@@ -54,44 +112,12 @@ namespace Hello_World
       
     }
 
-    public event GradeAddedDelegate GradeAdded;
+    public override event GradeAddedDelegate GradeAdded;
 
-    public Statistics GetStatistics() 
+    public override Statistics GetStatistics() 
     {
-      var result = new Statistics
-      {
-        Average = 0.0,
-        High = double.MinValue,
-        Low = double.MaxValue
-      };
-
-      foreach (var grade in grades)
-      {
-        result.Low = Math.Min(grade, result.Low);
-        result.High = Math.Max(grade, result.High);
-        result.Average += grade;
-      }
-      result.Average /= grades.Count;
-
-      switch (result.Average)
-      {
-        case var d when d >= 90.0:
-          result.Letter = 'A';
-          break;
-        case var d when d >= 80.0:
-          result.Letter = 'B';
-          break;
-        case var d when d >= 70.0:
-          result.Letter = 'C';
-          break;
-        case var d when d >= 60.0:
-          result.Letter = 'D';
-          break;
-        default:
-          result.Letter = 'F';
-          break;
-      }
-
+      var result = new Statistics(grades);
+      result.ComputeStatistics();
       return result;
     }
 
